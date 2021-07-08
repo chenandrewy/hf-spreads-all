@@ -9,6 +9,11 @@
 
 echo "Starting Job at `date`"
 
+mkdir ~/temp_output/
+mkdir ~/temp_log/
+
+echo PART 1/2 CALCULATING ISSM SPREADS
+
 # run spreads code day by day
 for year in $(seq 1983 1992)
 do
@@ -22,3 +27,6 @@ echo "Ending Job at `date`"
 
 echo combining and averaging and outputting to ~/temp_output/
 sas combine_and_average.sas
+
+echo PART 2/2 COMPILING WRDS IID SPREADS
+sas iid_to_monthly.sas

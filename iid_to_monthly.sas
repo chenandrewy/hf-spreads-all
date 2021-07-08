@@ -1,5 +1,5 @@
 /* 
-  reads in wrds iid data and exports csv to ~/wrds_iid/ 
+  reads in wrds iid data and exports csv to ~/temp_output/ 
   andrew chen 2021 04	
   
   even though wrds labels these spreads as "pct" or "percent," it's clear these spreads are straight ratios, hence the 100*
@@ -117,14 +117,14 @@ run;
 proc print data=monthly_iid (obs=20); run;
 
 proc export data = monthly_iid
-  outfile = "~/wrds_iid/wrds_iid_monthly.csv"
+  outfile = "~/temp_output/wrds_iid_monthly.csv"
   dbms = csv
   replace;
 run;
 
 
 proc export data = daily_iid
-  outfile = "~/wrds_iid/wrds_iid_daily.csv"
+  outfile = "~/temp_output/wrds_iid_daily.csv"
   dbms = csv
   replace;
 run;

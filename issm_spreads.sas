@@ -6,7 +6,7 @@ built off issm_spreads_local.sas
 this version should be run on the wrds server.
 
 inputs: /wrds/issm/sasdata
-outputs: /scratch/frb/ayc/
+outputs: ~/temp_output/
 
 */
 
@@ -17,16 +17,9 @@ proc datasets library=work kill;run; quit;
 %let yyyy = %sysget(yyyy); * get year from command line;
 %let exchprefix = %sysget(exchprefix); * get nyam or nasd from command line;
 libname issm '/wrds/issm/sasdata'; * issm data location on wrds;
-libname output '/scratch/frb/ayc_issm/'; * output path;
+libname output '~/temp_output/'; * output path;
 
 
-/*
-	* for local testing;
-	%let yyyy = _samp; * get year from command line;
-	%let exchprefix = issm_nyam; * get nyam or nasd from command line;
-	libname issm 'b:/costzoo/data/test_data/'; * issm data location on wrds;
-	libname output 'b:/costzoo/data/test_data/'; * output path;
-*/
 
 
 * quote delay is in seconds
@@ -279,7 +272,9 @@ run;
    ARE MATCHED WITH QUOTES IN FORCE AT INTERPOLATED TIME TMM(M-1)
    To Do This, Increase Interpolated Quote Time in Quotes Dataset by One
    Millisecond = .001*/
-* ac: i make this lag flexible, see above;
+* ac: skip interpolation.  We found issues with it in WRDS iid data;
+* also, quote delay is set using macro &quotedelay;
+
 
 data CompleteNBBOinforce;
     set CompleteNBBO;

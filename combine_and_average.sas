@@ -5,7 +5,7 @@ Andrew 2018 08
 
 This is for ISSM data
 Instructions:
-(1) check the scratch directory with many annual datasets
+(1) check the many outputs directory with many annual datasets
 (2) Find an example date to work off of
 (3) Enter example date in User section
 
@@ -19,7 +19,7 @@ go directory with files and use ls to find a good date
 */
 
 * where the many datasets are;
-libname many "/scratch/frb/ayc_issm";
+libname many "~/temp_output/";
 
 * goodyear is for initializing;
 %let goodyear = 1987;
