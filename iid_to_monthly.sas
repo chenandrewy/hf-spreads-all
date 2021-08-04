@@ -23,6 +23,8 @@
 	https://wrds-www.wharton.upenn.edu/pages/support/manuals-and-overviews/wrds-intraday-indicators/
 	https://wrds-www.wharton.upenn.edu/documents/1038/WRDS_DTAQ_IID_Manual_1.0.pdf
 	
+  updated 2021 08 to add sym_root and sym_suffix
+	
 */
 
 proc datasets library=WORK kill; run; quit;
@@ -30,7 +32,7 @@ dm "out;clear;log;clear;"; /*clears output and log windows*/
 
 libname s_iid "/wrds/nyse/sasdata/wrds_taqs_iid_v1/";
 libname ms_iid "/wrds/nyse/sasdata/wrds_taqms_iid/";
-*%let subsamp = month(date) = 4 and symbol = 'A';
+*%let subsamp = month(date) = 4;
 %let subsamp = not missing(date);
 
 * ==== IMPORT DATA AND MERGE ====;
@@ -57,12 +59,13 @@ data daily_dtaq; set ms_iid.wrds_iid_:;
 	espread_pct = 100*EffectiveSpread_Percent_DW;
 	qspread_pct = 100*QuotedSpread_Percent_tw; 	* time weighted, market hours (only one available);
 	
-  	keep date symbol espread_pct qspread_pct year yearm;  	
+  	keep date symbol sym_root sym_suffix espread_pct qspread_pct year yearm;  	
 run;
 
 * merge dtaq and mtaq;
 proc sql; create table daily_iid as select
 	coalesce(a.symbol, b.symbol) as symbol
+	, a.sym_root, a.sym_suffix
 	, coalesce(a.date, b.date) as date
 	, coalesce(a.espread_pct, b.espread_pct) as espread_pct
 	, coalesce(a.qspread_pct, b.qspread_pct) as qspread_pct
@@ -89,29 +92,31 @@ run;
 * ==== SCREEN AND COLLAPSE ==== ;
 data temp; set daily_iid; run;
 
-proc sort data=temp; by symbol yearm date; run;
+proc sort data=temp; by symbol sym_root sym_suffix yearm date; run;
 data temp; set temp;
   	where espread_pct < 4*qspread_pct
 		and espread_pct < 40
 		and qspread_pct < 40
 		and not missing(espread_pct);  		
-  	by symbol yearm;
+  	by symbol sym_root sym_suffix yearm;
   	if last.yearm then do;
   		espread_pct_month_end = espread_pct;
 	end;		
 run;	
 
+
 proc means data=temp noprint;
 	var espread_pct espread_pct_month_end;
-	by symbol yearm;
+	by symbol sym_root sym_suffix yearm;
 	output out = monthly_iid mean= /autoname;
 run;		
 
 data monthly_iid; set monthly_iid;	
 	espread_n = _freq_;
 	rename espread_pct_month_end_Mean = espread_pct_month_end;
-	keep symbol yearm espread:;
+	keep symbol sym_root sym_suffix yearm espread:;
 run;	
+
 
 * ==== SAVE ==== ;
 proc print data=monthly_iid (obs=20); run;
