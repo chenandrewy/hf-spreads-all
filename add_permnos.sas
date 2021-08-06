@@ -22,9 +22,16 @@ proc import datafile = '~/temp_output/wrds_iid_monthly.csv' out=iid
 run;	
 
 data msenames; set crsp.msenames; 	
-	linkyearmstart = year(namedt)*100 + month(namedt);
-	linkyearmend = year(nameendt)*100 + month(nameendt);	
-	keep permno namedt nameendt ticker shrcls linkyearm:;
+	* round to nearest month to ensure distinct;
+	* note this means we should use < for end dates;
+	linkstart = namedt; linkend = nameendt;
+	if day(linkstart) > 15 then linkstart = intnx('month', linkstart, 1);
+	if day(linkend) > 15 then linkend = intnx('month', linkend, 1);
+	
+	linkyearmstart = year(linkstart)*100 + month(linkstart);
+	linkyearmend = year(linkend)*100 + month(linkend);	
+	
+	keep permno namedt nameendt ticker shrcls link: name:;
 run;
 
 * ==== append into dataset hf0 ==== ;
@@ -64,7 +71,7 @@ proc sql; create table hf1 as select
 	from hf0 as a
 	left join msenames as b
 	on a.sym_root = b.ticker and a.sym_suffix = b.shrcls
-	and a.yearm >= b.linkyearmstart and a.yearm <= b.linkyearmend
+	and a.yearm >= b.linkyearmstart and a.yearm < b.linkyearmend
 	and not missing(a.sym_root);
 quit;
 
