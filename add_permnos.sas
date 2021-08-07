@@ -43,7 +43,7 @@ data temp; set issm;
 	sym_root = scan(symbol,1,'.');
 	suffix_1 = scan(symbol,2,'.');	
 	suffix_2 = scan(symbol,3,'.');		
-	sym_suffix = cats(suffix_1,suffix_2); * ISSM has double suffixes, like .A.WI.  We turn this into .AWI
+	sym_suffix = cats(suffix_1,suffix_2); * ISSM has double suffixes, like .A.WI.  We turn this into .AWI;
 	
 	espread_pct_mean = eff_spread_dw_ave*100;
 	yearm = year*100 + month;
@@ -113,7 +113,7 @@ proc sort data=hf2; by permno yearm; run;
 * 1,500 out of 3 million obs are dups;
 
 * split data into unique and nonuinque;
-proc sort data=temp0 out=temp_nonunique uniqueout=temp_unique nouniquekey;
+proc sort data=hf2 out=temp_nonunique uniqueout=temp_unique nouniquekey;
 	by permno yearm;
 	where not missing(permno);
 run;

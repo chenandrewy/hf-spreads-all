@@ -147,9 +147,3 @@ proc export data = monthly_iid
   replace;
 run;
 
-
-proc export data = daily_iid
-  outfile = "~/temp_output/wrds_iid_daily.csv"
-  dbms = csv
-  replace;
-run;
