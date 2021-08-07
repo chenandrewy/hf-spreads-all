@@ -41,7 +41,9 @@ select dw spreads to match iid data
 ;
 data temp; set issm; 
 	sym_root = scan(symbol,1,'.');
-	sym_suffix = scan(symbol,2,'.');	
+	suffix_1 = scan(symbol,2,'.');	
+	suffix_2 = scan(symbol,3,'.');		
+	sym_suffix = cats(suffix_1,suffix_2); * ISSM has double suffixes, like .A.WI.  We turn this into .AWI
 	
 	espread_pct_mean = eff_spread_dw_ave*100;
 	yearm = year*100 + month;
@@ -55,7 +57,6 @@ run;
 data hf0;
 	set temp iid;
 run;	
-
 
 
 * ==== add permnos using ticker + shrcls as hf1 ==== ;
@@ -75,33 +76,69 @@ proc sql; create table hf1 as select
 	and not missing(a.sym_root);
 quit;
 
+data hf1; format permno yearm _all_;  set hf1; run;
+
 * ==== add permnos using WRDS tclink algo as hf2 ==== ;
 
 * create link table using WRDS code;
 %include '~/hf-spreads-all/macro_tclink.sas';
 %TCLINK (BEGDATE=199301,ENDDATE=201012,OUTSET=WORK.mtaq_link);
 
+* remove duplicates from mtaq_link by keeping first symbol (also shortest symbol);
+proc sort data = mtaq_link; by permno date symbol; run;
+data mtaq_link2; set mtaq_link; 
+	by permno date;
+	if first.date then output;
+run;	
+
 proc sql; create table hf2 as select
-	a.*, coalesce(a.permno, b.permno) as permno2
+	a.*, b.permno as permno_wrds
 	from hf1 as a 
-	left join mtaq_link as b
+	left join mtaq_link2 as b
 	on a.symbol = b.symbol and a.yearm = year(b.date)*100+month(b.date);
 run;
 
 * clean up;	
-data hf2; format permno permno2 yearm espread_pct_mean espread_n espread_pct_month_end symbol sym_root sym_suffix;
+data hf2; format permno permno_wrds yearm espread_pct_mean espread_n espread_pct_month_end symbol sym_root sym_suffix;
 	set hf2;
-	where not missing(permno2);
+	permno2 = coalesce(permno, permno_wrds);
 	drop permno;
 run;	
 data hf2; set hf2;
-	rename permno2=permno;
+	rename permno2 = permno;
 run;	
 proc sort data=hf2; by permno yearm; run;
 
+* ==== clean up a tiny amount of dups ==== ;
+* 1,500 out of 3 million obs are dups;
+
+* split data into unique and nonuinque;
+proc sort data=temp0 out=temp_nonunique uniqueout=temp_unique nouniquekey;
+	by permno yearm;
+	where not missing(permno);
+run;
+
+* intuitive cleaning removes 1200 dups;
+data temp_nonunique1; set temp_nonunique;
+	if source = 'mtaq' then delete; * delete if from mtaq; 
+	if source = 'dtaq' and not missing(permno_wrds) then delete; * else keep only msenames link;
+run;	
+
+* for remaining 300 dups, keep if more observations;
+* there seem to be some weird alternative shares situations (VALE and VALEP get assigned to same permno) 
+  but these all have a tiny number of daily obs in the month;
+proc sort data=temp_nonunique1; by permno yearm descending espread_n; run;
+data temp_nonunique1; set temp_nonunique1;
+	by permno yearm;
+	if first.yearm then output;
+run;	
+
+* append back together;
+data hf3; set temp_unique temp_nonunique1; run;
+
 
 * ==== export ==== ;
-proc export data = hf2
+proc export data = hf3
   outfile = "~/temp_output/hf_monthly.csv"
   dbms = csv
   replace;
