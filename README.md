@@ -1,21 +1,35 @@
 # Overview
-Code high-frequency direct trading costs used in "Zeroing in on the Expected Returns of Anomalies" by Andrew Y. Chen and Mihail Velikov.
+Code for high-frequency direct trading costs used in "Zeroing in on the Expected Returns of Anomalies" by Andrew Y. Chen and Mihail Velikov.
 
-Generates permno-month effective bid-ask spreads in csv form using data from 
+Generates permno-month effective bid-ask spreads for in csv form using data from 
 * Daily TAQ (via WRDS Intraday Indicators)
 * Monthly TAQ (via WRDS Intraday Indicators)
 * ISSM (from the raw high-frequency ISSM data)
 * CRSP (for permnos)
 
-Takes about 1 hour, mostly for the issm data.
+This data covers 
+* Essentially all transactions on the NYSE and AMEX from 1983-present
+* Almost all transactions on NASDAQ from 1987-present
+  * About 8 months of NASDAQ data between 1987-1991 are missing from ISSM (also found missing by Barber, Odean, and Zhu 2008)
+
+For further details, please see the paper
+
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3073681
+
+For the code that generates low-frequency costs, portfolio implementations, etc, please see
+
+https://github.com/velikov-mihail/Chen-Velikov
+
 
 # Thank Yous
-* Craig Holden and Stacey Jacobsen.  The ISSM code is a minor adaptation of the code for their 2014 JF, which they graciously share.
+* Craig Holden and Stacey Jacobsen.  The ISSM code is a minor adaptation of the code for their 2014 JF, which they graciously shared.
 * Rabih Moussawi.  We use his TAQ-CRSP link macro to merge MTAQ permnos
-* WRDS Support for the assistance with understanding the IID data
+* WRDS Support for their assistance with understanding the IID data
 
 # Instructions
 upload to wrds server, run "qsub main.sh" at the linux prompt.
+
+Takes about 1 hour, mostly for the issm data.
 
 main.sh makes folders
 * ~/temp_output/ - output data (csv format) goes here 
